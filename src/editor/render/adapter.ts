@@ -95,7 +95,7 @@ async function objectFor(
     selectable: !locked && !layer.locked,
     evented: !locked && !layer.locked,
     hasControls: false,
-    borderColor: "#B93D39",
+    borderColor: "#f5e211",
     objectCaching: layer.kind === "group",
     strokeWidth:
       object instanceof IText && layer.kind === "text" && layer.stroke
@@ -486,18 +486,23 @@ export class Workspace {
       }
     }
     ctx.restore();
-    ctx.strokeStyle = "#b93d39";
-    ctx.setLineDash([4, 3]);
+    // Two-tone dashes stay visible on both light and dark photo content.
     for (const object of this.objects()) {
       if (!this.selectedIds.includes(object.layerId) || !object.visible)
         continue;
       const b = object.getBoundingRect();
-      ctx.strokeRect(
+      const rect = [
         x + b.left * this.zoom,
         y + b.top * this.zoom,
         b.width * this.zoom,
         b.height * this.zoom,
-      );
+      ] as const;
+      ctx.setLineDash([]);
+      ctx.strokeStyle = "#16171acc";
+      ctx.strokeRect(...rect);
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = "#f5e211";
+      ctx.strokeRect(...rect);
     }
     ctx.setLineDash([]);
     this.pointerTool?.draw(ctx);

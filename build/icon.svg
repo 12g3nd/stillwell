@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Stillwell mark: a sun on still water; its reflection breaks into tool-colour capsules. -->
+  <rect x="48" y="48" width="928" height="928" rx="208" fill="#232428"/>
+  <path d="M252 540 A260 260 0 0 1 772 540 Z" fill="#f5e211"/>
+  <rect x="272" y="580" width="480" height="58" rx="29" fill="#ff705d"/>
+  <rect x="342" y="672" width="340" height="50" rx="25" fill="#5b98ff"/>
+  <rect x="422" y="756" width="180" height="42" rx="21" fill="#a6dc5a"/>
+</svg>

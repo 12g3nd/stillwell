@@ -1,4 +1,5 @@
 import React from "react";
+import { Icon } from "./icons";
 import {
   flattenLayers,
   type PhotoDocument,
@@ -114,10 +115,30 @@ export function LayerControls(p: Props) {
                 p.select(l.id, e.ctrlKey || e.metaKey || e.shiftKey)
               }
             >
-              <span>
-                {l.kind === "group" ? "▱" : l.kind === "text" ? "T" : "▧"}
+              <span className="layer-kind" data-kind={l.kind}>
+                <Icon
+                  name={
+                    l.kind === "group"
+                      ? "group"
+                      : l.kind === "text"
+                        ? "text"
+                        : "image"
+                  }
+                  size={16}
+                />
               </span>
-              <strong>{l.name}</strong>
+              <span className="layer-text">
+                <strong>{l.name}</strong>
+                <small>
+                  {l.kind === "group"
+                    ? "Group"
+                    : l.kind === "text"
+                      ? "Text"
+                      : "Image"}
+                  {!l.visible ? " · hidden" : ""}
+                  {l.locked || inherited ? " · locked" : ""}
+                </small>
+              </span>
             </button>
             <button
               className="layer-state"
@@ -129,7 +150,7 @@ export function LayerControls(p: Props) {
                 )
               }
             >
-              {l.visible ? "◉" : "○"}
+              <Icon name={l.visible ? "eye" : "eyeOff"} size={16} />
             </button>
             <button
               className="layer-state"
@@ -139,7 +160,10 @@ export function LayerControls(p: Props) {
                 p.change((doc) => patchLayer(doc, l.id, { locked: !l.locked }))
               }
             >
-              {l.locked || inherited ? "●" : "◇"}
+              <Icon
+                name={l.locked || inherited ? "lock" : "unlock"}
+                size={16}
+              />
             </button>
           </div>
           {l.kind === "group" && rows(l.children, depth + 1)}
@@ -162,12 +186,14 @@ export function LayerControls(p: Props) {
           Add text
         </button>
       </div>
-      <div className="layer-list" role="group" aria-label="Layer stack">
+      <div
+        className="layer-list"
+        role="group"
+        aria-label="Layer stack"
+        title="Ctrl/Shift-click to select several. Drag rows to reorder within a group."
+      >
         {rows(p.doc.layers)}
       </div>
-      <p className="hint">
-        Ctrl/Shift-click to select several. Drag rows to reorder within a group.
-      </p>
       <div className="layer-actions">
         <button
           disabled={p.disabled || !p.selected.length}
@@ -224,7 +250,12 @@ export function LayerControls(p: Props) {
               <label key={kind}>
                 {kind === "width" ? "Width" : "Height"}
                 <input
-                  key={one.id + one.transform.join(",") + kind}
+                  key={
+                    one.id +
+                    one.transform.join(",") +
+                    kind +
+                    (size ? `${size.width}x${size.height}` : "pending")
+                  }
                   aria-label={"Layer " + kind}
                   type="number"
                   min="1"
@@ -339,7 +370,10 @@ export function LayerControls(p: Props) {
           )}
         </div>
       )}
-      <div className="alignment">
+      <div
+        className="alignment"
+        title="One layer aligns to the canvas; multiple layers align to their combined bounds."
+      >
         <h3>Align & distribute</h3>
         <div className="layer-actions">
           {(
@@ -381,10 +415,6 @@ export function LayerControls(p: Props) {
             Space vertically
           </button>
         </div>
-        <p className="hint">
-          One layer aligns to the canvas; multiple layers align to their
-          combined bounds.
-        </p>
       </div>
     </>
   );

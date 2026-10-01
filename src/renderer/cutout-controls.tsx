@@ -386,7 +386,7 @@ export function CutoutControls(p: Props) {
             ? "Click a colour in the original working image. The tint shows selected pixels."
             : tool.endsWith("brush")
               ? "Paint on the image. Each stroke is one undo step. Restore keeps the source's original alpha."
-              : "Drag on the image to select. The tint is an overlay and never exports."}
+              : "Drag on the image to select. The tint is only an overlay."}
       </p>
       {tool === "polygon" && (
         <button disabled={disabled || !drawing} onClick={finishPolygon}>
@@ -547,13 +547,14 @@ export function CutoutControls(p: Props) {
           <option value="black">Black</option>
         </select>
       </label>
-      <button disabled={p.busy} onClick={() => void p.trim()}>
+      <button
+        className="tool-action"
+        title="Crops to the visible pixels, keeping every partly transparent edge. Undoable."
+        disabled={p.busy}
+        onClick={() => void p.trim()}
+      >
         Trim transparent edges
       </button>
-      <p className="hint">
-        Trim uses the visible composition, keeps every nonzero alpha pixel, and
-        can be undone. Masks never alter original image bytes.
-      </p>
     </section>
   );
 }

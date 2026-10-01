@@ -27,6 +27,7 @@ await build({
 });
 await copyFile("src/renderer/index.html", "dist/index.html");
 await copyFile("src/renderer/print.html", "dist/print.html");
+await copyFile("build/icon-256.png", "dist/icon.png");
 await build({
   entryPoints: ["src/workers/text-shape.ts"],
   outfile: "dist/text-shape.js",

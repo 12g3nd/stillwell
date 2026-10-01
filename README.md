@@ -5,11 +5,16 @@ clone/spot-heal, painting and local liquify, alongside constrained TIFF/SVG/PSD 
 print size/resolution, borders, PDF export, versions, portable projects and editable layers.
 Originals stay immutable. HEIC remains unsupported.
 
-## Launch
+## Install
 
-After building a Windows package, open
-`release/win-unpacked/Stillwell.exe`. Keep the whole `win-unpacked`
-folder together. This is a local unsigned directory build, not an installer.
+`npm run installer` builds `release/Stillwell-Setup-<version>.exe`, an unsigned
+per-user installer (no administrator rights). It installs to
+`%LOCALAPPDATA%\Programs\Stillwell` and adds Start menu and desktop shortcuts;
+uninstall from Windows Settings → Apps. Projects live in the local library and are
+kept across reinstalls. `npm run package` still produces the portable
+`release/win-unpacked/Stillwell.exe` directory build.
+
+## Launch
 
 From a terminal in this folder:
 
@@ -228,7 +233,10 @@ instead of committing only a prefix. Source images are never overwritten.
 
 These are mouse/keyboard tools. Pen pressure, vector drawing, cross-layer clone,
 content-aware healing and mesh/freeze/reconstruct liquify are not implemented.
-The soft-light theme remains the default; a dark theme is deferred until actual use.
+Stillwell opens in a dark theme; the sun/moon button in the header switches to the
+light theme and the choice is remembered on this computer. Each tool has its own
+colour on the rail and in its panel. `npm run icons` regenerates the app icon from
+`build/icon.svg`.
 
 ## Verify / build
 

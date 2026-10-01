@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Icon } from "./icons";
 import type { PhotoDocument } from "../editor/model/document";
 import type { Workspace } from "../editor/render/adapter";
 export function GuideControls({
@@ -109,13 +110,13 @@ export function GuideControls({
               }))
             }
           >
-            ×
+            <Icon name="close" size={14} />
           </button>
         </div>
       ))}
       <p className="hint">
-        Guides are saved with the project and never exported. Snapping is
-        independent of visibility.
+        Guides are saved with the project. Snapping works even when guides are
+        hidden.
       </p>
     </section>
   );

@@ -1,6 +1,6 @@
 {
   "name": "stillwell",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "An offline Windows photo editor with editable layers and local version history",
   "main": "dist/main.cjs",
@@ -9,7 +9,9 @@
     "start": "npm run build && electron .",
     "typecheck": "tsc --noEmit",
     "test": "npm run build && playwright test",
-    "package": "npm run build && electron-builder --win dir"
+    "package": "npm run build && electron-builder --win dir",
+    "icons": "node scripts/make-icons.mjs",
+    "installer": "npm run build && electron-builder --win nsis"
   },
   "dependencies": {
     "ag-psd": "31.0.2",
@@ -36,7 +38,8 @@
     "appId": "app.stillwell.desktop",
     "productName": "Stillwell",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "dist/**/*",
@@ -49,7 +52,18 @@
     ],
     "win": {
       "target": "dir",
-      "signAndEditExecutable": false
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": true
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "shortcutName": "Stillwell",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "artifactName": "Stillwell-Setup-${version}.${ext}"
     }
   }
 }

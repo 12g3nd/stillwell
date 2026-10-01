@@ -54,3 +54,7 @@ private-fixtures/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Local design-review evidence (Impeccable mocks and screenshots)
+/.impeccable/
+/.hallmark/

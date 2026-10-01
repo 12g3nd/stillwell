@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Icon } from "./icons";
 import type { PhotoDocument, TextLayer } from "../editor/model/document";
 import {
   textStyleSchema,
@@ -105,7 +106,7 @@ export function TextControls(p: Props) {
   }
   return (
     <section className="text-controls" aria-label="Typography">
-      <button disabled={p.disabled} onClick={p.addText}>
+      <button className="tool-action" disabled={p.disabled} onClick={p.addText}>
         Add text layer
       </button>
       {!layer && (
@@ -128,15 +129,17 @@ export function TextControls(p: Props) {
       </label>
       <button
         disabled={disabled || !!layer?.curve || !!layer?.warp?.amount}
+        title="Or double-click the text. Ctrl+Enter finishes as one undo step; Esc cancels."
         onClick={p.editCanvas}
       >
         Edit on canvas
       </button>
-      <p className="hint">
-        {layer?.curve || layer?.warp?.amount
-          ? "Edit shaped text in Text content above. Set curve and warp to zero to edit directly on canvas."
-          : "Double-click text or use Edit on canvas. Done or Ctrl+Enter commits one undo step; Escape cancels."}
-      </p>
+      {(layer?.curve || layer?.warp?.amount) && (
+        <p className="hint">
+          Shaped text is edited in Text content above. Set curve and warp to
+          zero to edit on the canvas.
+        </p>
+      )}
       <label>
         Font face
         <select
@@ -174,7 +177,11 @@ export function TextControls(p: Props) {
         <button disabled={p.disabled} onClick={() => void refresh()}>
           Refresh installed fonts
         </button>
-        <button disabled={disabled} onClick={p.importFont}>
+        <button
+          disabled={disabled}
+          title="Imported fonts are saved with this project. Installed fonts must stay installed on this computer."
+          onClick={p.importFont}
+        >
           Import font file
         </button>
         <button
@@ -204,10 +211,6 @@ export function TextControls(p: Props) {
           {fontError}
         </p>
       )}
-      <p className="hint">
-        Fonts stay local. Imported files are saved with this project; installed
-        faces must remain available on this computer.
-      </p>
       <div className="fields">
         {number("Font size", "fontSize", 48, 1, 1000)}
         <label>
@@ -267,10 +270,6 @@ export function TextControls(p: Props) {
         Wrap text
       </label>
       {number("Text box width", "wrapWidth", 400, 20, 12000)}
-      <p className="hint">
-        Word wrapping preserves explicit line breaks. Long unbroken words may
-        extend the box.
-      </p>
       <div className="fields">
         {number("Line spacing", "lineHeight", 1.16, 0.5, 4, 0.05)}
         {number("Letter spacing", "letterSpacing", 0, -20, 200, 0.5)}
@@ -523,7 +522,7 @@ export function TextControls(p: Props) {
               }))
             }
           >
-            ×
+            <Icon name="close" size={14} />
           </button>
         </div>
       ))}

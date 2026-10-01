@@ -44,7 +44,92 @@ import {
   translateWorld,
   selectionRoots,
 } from "../editor/commands/layers";
+import { Icon, Logo, type IconName } from "./icons";
 import "./style.css";
+type Theme = "dark" | "light";
+const themeKey = "stillwell-theme";
+function storedTheme(): Theme {
+  try {
+    return localStorage.getItem(themeKey) === "light" ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
+}
+type Tool =
+  | "arrange"
+  | "size"
+  | "cutout"
+  | "text"
+  | "adjust"
+  | "shelf"
+  | "print"
+  | "filters"
+  | "retouch"
+  | "draw"
+  | "liquify";
+// Rail order, accessible names and tooltips are part of the tested contract.
+const railTools: { id: Tool; icon: IconName; label: string; title: string }[] =
+  [
+    {
+      id: "arrange",
+      icon: "arrange",
+      label: "Toggle arrange settings",
+      title: "Arrange",
+    },
+    { id: "size", icon: "crop", label: "Crop and size", title: "Crop & size" },
+    {
+      id: "cutout",
+      icon: "cutout",
+      label: "Cutout",
+      title: "Cutout & transparency",
+    },
+    { id: "text", icon: "text", label: "Text tool", title: "Text" },
+    {
+      id: "adjust",
+      icon: "adjust",
+      label: "Adjustments",
+      title: "Light & colour",
+    },
+    { id: "filters", icon: "filters", label: "Filters", title: "Filters" },
+    {
+      id: "retouch",
+      icon: "retouch",
+      label: "Retouch",
+      title: "Clone & spot heal",
+    },
+    { id: "draw", icon: "draw", label: "Draw", title: "Draw on a new layer" },
+    {
+      id: "liquify",
+      icon: "liquify",
+      label: "Liquify",
+      title: "Push, pinch & expand",
+    },
+    {
+      id: "shelf",
+      icon: "shelf",
+      label: "Local shelf",
+      title: "Saved images & text styles",
+    },
+    {
+      id: "print",
+      icon: "print",
+      label: "Print settings",
+      title: "Print size, border & PDF",
+    },
+  ];
+const toolNames: Record<Tool, string> = {
+  arrange: "Arrange",
+  size: "Crop & size",
+  cutout: "Cutout",
+  text: "Text",
+  adjust: "Adjust",
+  filters: "Filters",
+  retouch: "Retouch",
+  draw: "Draw",
+  liquify: "Liquify",
+  shelf: "Shelf",
+  print: "Print & border",
+};
 declare global {
   interface Window {
     photo: Bridge;
@@ -74,19 +159,7 @@ function App() {
     [showVersions, setShowVersions] = useState(false),
     [checkpoints, setCheckpoints] = useState<CheckpointInfo[]>([]),
     [checkpointName, setCheckpointName] = useState("");
-  const [tool, setTool] = useState<
-    | "arrange"
-    | "size"
-    | "cutout"
-    | "text"
-    | "adjust"
-    | "shelf"
-    | "print"
-    | "filters"
-    | "retouch"
-    | "draw"
-    | "liquify"
-  >("arrange");
+  const [tool, setTool] = useState<Tool>("arrange");
   const [textEditing, setTextEditing] = useState(false);
   const [panelTextDraft, setPanelTextDraft] = useState(false);
   const [backdrop, setBackdrop] = useState<"checker" | "white" | "black">(
@@ -116,6 +189,15 @@ function App() {
     canvas = useRef<HTMLCanvasElement>(null),
     overlay = useRef<HTMLCanvasElement>(null);
   const [view, setView] = useState({ x: 0, y: 0, z: 1 });
+  const [theme, setTheme] = useState<Theme>(storedTheme);
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem(themeKey, theme);
+    } catch {
+      // Storage can be unavailable; the theme still applies for this session.
+    }
+  }, [theme]);
   const busyRef = useRef(false);
   const activeOperation = useRef<Promise<void> | undefined>(undefined);
   busyRef.current = busy;
@@ -734,7 +816,7 @@ function App() {
     >
       <header>
         <div className="app-name">
-          <span className="app-mark">▧</span>
+          <Logo />
           <strong>Stillwell</strong>
         </div>
         <div className="project-title">
@@ -751,98 +833,103 @@ function App() {
               : "Local project library"}
           </span>
         </div>
+        <div className="history-pair">
+          <button
+            className="icon-button"
+            aria-label="Undo"
+            title="Undo (Ctrl+Z)"
+            disabled={blocked || !project.canUndo}
+            onClick={() => history("undo")}
+          >
+            <Icon name="undo" />
+          </button>
+          <button
+            className="icon-button"
+            aria-label="Redo"
+            title="Redo (Ctrl+Y)"
+            disabled={blocked || !project.canRedo}
+            onClick={() => history("redo")}
+          >
+            <Icon name="redo" />
+          </button>
+        </div>
+        <div className="header-actions">
+          <button
+            disabled={blocked}
+            onClick={() => {
+              void run(async () => {
+                await project.flush();
+                setRecent(await window.photo.recent());
+                setShowRecent(true);
+              });
+            }}
+          >
+            <Icon name="folder" />
+            Projects
+          </button>
+          <button
+            disabled={blocked || !doc}
+            onClick={() => {
+              void run(async () => {
+                await project.flush();
+                setCheckpoints(await window.photo.checkpoints());
+                setVersionPage(0);
+                setShowVersions(true);
+              });
+            }}
+          >
+            <Icon name="history" />
+            Versions
+          </button>
+          <button onClick={open} disabled={blocked}>
+            <Icon name="open" />
+            Open photo
+          </button>
+        </div>
         <button
-          disabled={blocked}
-          onClick={() => {
-            void run(async () => {
-              await project.flush();
-              setRecent(await window.photo.recent());
-              setShowRecent(true);
-            });
-          }}
+          className="icon-button theme-switch"
+          aria-label={
+            theme === "dark" ? "Switch to light theme" : "Switch to dark theme"
+          }
+          title={theme === "dark" ? "Light theme" : "Dark theme"}
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         >
-          Projects
-        </button>
-        <button
-          aria-label="Undo"
-          disabled={blocked || !project.canUndo}
-          onClick={() => history("undo")}
-        >
-          ↶
-        </button>
-        <button
-          aria-label="Redo"
-          disabled={blocked || !project.canRedo}
-          onClick={() => history("redo")}
-        >
-          ↷
-        </button>
-        <button
-          disabled={blocked || !doc}
-          onClick={() => {
-            void run(async () => {
-              await project.flush();
-              setCheckpoints(await window.photo.checkpoints());
-              setVersionPage(0);
-              setShowVersions(true);
-            });
-          }}
-        >
-          Versions
-        </button>
-        <button onClick={open} disabled={blocked}>
-          Open photo
+          <Icon name={theme === "dark" ? "sun" : "moon"} />
         </button>
         <button
           className="primary"
           onClick={exportImage}
           disabled={!doc || blocked}
         >
-          Export {format.toUpperCase()} <span>↗</span>
+          <Icon name="export" />
+          Export {format.toUpperCase()}
         </button>
       </header>
       <div className="work-area">
         <nav aria-label="Workspace panels">
+          {railTools.map((t) => (
+            <button
+              key={t.id}
+              data-tool={t.id}
+              className={tool === t.id ? "active" : ""}
+              aria-label={t.label}
+              title={t.title}
+              disabled={blocked || (t.id !== "arrange" && !doc)}
+              onClick={() => {
+                setTool(t.id);
+                setSettings(true);
+                if (t.id === "size") {
+                  setSizeW(doc!.width);
+                  setSizeH(doc!.height);
+                }
+              }}
+            >
+              <Icon name={t.icon} />
+            </button>
+          ))}
+          <div className="rail-spacer" />
           <button
-            className={tool === "arrange" ? "active" : ""}
-            aria-label="Toggle arrange settings"
-            title="Arrange settings"
-            disabled={blocked}
-            onClick={() => {
-              setSettings(true);
-              setTool("arrange");
-            }}
-          >
-            ↖
-          </button>
-          <button
-            aria-label="Crop and size"
-            title="Crop and size"
-            disabled={!doc || blocked}
-            className={tool === "size" ? "active" : ""}
-            onClick={() => {
-              setTool("size");
-              setSettings(true);
-              setSizeW(doc!.width);
-              setSizeH(doc!.height);
-            }}
-          >
-            ⌗
-          </button>
-          <button
-            aria-label="Cutout"
-            title="Cutout and transparency"
-            disabled={!doc || blocked}
-            className={tool === "cutout" ? "active" : ""}
-            onClick={() => {
-              setTool("cutout");
-              setSettings(true);
-            }}
-          >
-            ✂
-          </button>
-          <button
-            className={grid ? "active" : ""}
+            className={grid ? "active view-toggle" : "view-toggle"}
             aria-label="Toggle grid"
             title="Document grid"
             onClick={() => {
@@ -851,170 +938,31 @@ function App() {
               workspace.current!.drawOverlay();
             }}
           >
-            ▦
+            <Icon name="grid" />
           </button>
           <button
-            aria-label="Text tool"
-            title="Typography"
-            disabled={!doc || blocked}
-            className={tool === "text" ? "active" : ""}
-            onClick={() => {
-              setTool("text");
-              setSettings(true);
-            }}
-          >
-            T
-          </button>
-          <button
-            aria-label="Adjustments"
-            title="Photo adjustments"
-            disabled={!doc || blocked}
-            className={tool === "adjust" ? "active" : ""}
-            onClick={() => {
-              setTool("adjust");
-              setSettings(true);
-            }}
-          >
-            ◐
-          </button>
-          <button
-            aria-label="Local shelf"
-            title="Saved images and text styles"
-            disabled={!doc || blocked}
-            className={tool === "shelf" ? "active" : ""}
-            onClick={() => {
-              setTool("shelf");
-              setSettings(true);
-            }}
-          >
-            ▤
-          </button>
-          <button
-            aria-label="Print settings"
-            title="Physical size, borders and PDF"
-            disabled={!doc || blocked}
-            className={tool === "print" ? "active" : ""}
-            onClick={() => {
-              setTool("print");
-              setSettings(true);
-            }}
-          >
-            ▣
-          </button>
-          <button
-            aria-label="Filters"
-            title="Photo filters"
-            disabled={!doc || blocked}
-            className={tool === "filters" ? "active" : ""}
-            onClick={() => {
-              setTool("filters");
-              setSettings(true);
-            }}
-          >
-            ◒
-          </button>
-          <button
-            aria-label="Retouch"
-            title="Clone and spot heal"
-            disabled={!doc || blocked}
-            className={tool === "retouch" ? "active" : ""}
-            onClick={() => {
-              setTool("retouch");
-              setSettings(true);
-            }}
-          >
-            ⌁
-          </button>
-          <button
-            aria-label="Draw"
-            title="Paint on a separate layer"
-            disabled={!doc || blocked}
-            className={tool === "draw" ? "active" : ""}
-            onClick={() => {
-              setTool("draw");
-              setSettings(true);
-            }}
-          >
-            ✎
-          </button>
-          <button
-            aria-label="Liquify"
-            title="Push, pinch and expand"
-            disabled={!doc || blocked}
-            className={tool === "liquify" ? "active" : ""}
-            onClick={() => {
-              setTool("liquify");
-              setSettings(true);
-            }}
-          >
-            ≈
-          </button>
-          <div className="rail-spacer" />
-          <button
-            className={layers ? "active" : ""}
+            className={layers ? "active view-toggle" : "view-toggle"}
             aria-label="Toggle layers panel"
             title="Layers panel"
             onClick={() => setLayers(!layers)}
           >
-            ▱
+            <Icon name="layers" />
           </button>
         </nav>
         {settings && (
-          <aside className="settings">
+          <aside className="settings" data-tool={tool}>
             <div className="panel-title">
-              <h1>
-                {tool === "retouch"
-                  ? "Retouch"
-                  : tool === "draw"
-                    ? "Draw"
-                    : tool === "liquify"
-                      ? "Liquify"
-                      : tool === "filters"
-                        ? "Filters"
-                        : tool === "arrange"
-                          ? "Arrange"
-                          : tool === "text"
-                            ? "Text"
-                            : tool === "cutout"
-                              ? "Cutout"
-                              : tool === "adjust"
-                                ? "Adjustments"
-                                : tool === "shelf"
-                                  ? "Local shelf"
-                                  : tool === "print"
-                                    ? "Print & border"
-                                    : "Crop & size"}
-              </h1>
+              <h1>{toolNames[tool]}</h1>
               <button
                 aria-label="Collapse settings"
+                title="Hide panel"
                 disabled={blocked}
-                className="quiet"
+                className="icon-button quiet"
                 onClick={() => setSettings(false)}
               >
-                ×
+                <Icon name="close" size={16} />
               </button>
             </div>
-            <p className="subtle">
-              {tool === "arrange"
-                ? "Give your photo room."
-                : tool === "text"
-                  ? "Words with room to breathe."
-                  : tool === "cutout"
-                    ? "Keep what matters. Restore anytime."
-                    : tool === "adjust"
-                      ? "Light, colour and detail."
-                      : tool === "shelf"
-                        ? "Keep useful pieces close."
-                        : tool === "filters"
-                          ? "Compare a look before applying it."
-                          : tool === "retouch"
-                            ? "Small repairs, original preserved."
-                            : tool === "draw"
-                              ? "Colour on a separate layer."
-                              : tool === "liquify"
-                                ? "Reshape locally. Undo any stroke."
-                                : "Make every pixel fit."}
-            </p>
             {doc?.importNote && (
               <p className="hint" role="note">
                 {doc.importNote}
@@ -1392,6 +1340,7 @@ function App() {
                   </div>
                 ) : (
                   <button
+                    className="tool-action"
                     disabled={busy || !doc}
                     onClick={() => {
                       void sizePreview();
@@ -1402,19 +1351,16 @@ function App() {
                 )}
               </section>
             )}
-            <section>
-              <h2>Document</h2>
-              <div className="dimensions">
-                <span>
-                  {shown ? `${shown.width} × ${shown.height}` : "— × —"}
-                </span>
-                <small>pixels</small>
+            <section className="canvas-section">
+              <div className="section-head">
+                <h2>Document</h2>
+                <div className="dimensions">
+                  <span>
+                    {shown ? `${shown.width} × ${shown.height}` : "— × —"}
+                  </span>
+                  <small>pixels</small>
+                </div>
               </div>
-              <p className="hint">
-                Export uses these dimensions at every zoom level.
-              </p>
-            </section>
-            <section>
               <label className="toggle">
                 <input
                   type="checkbox"
@@ -1427,9 +1373,6 @@ function App() {
                 />
                 Document grid
               </label>
-              <p className="hint">
-                A placement guide. Never part of your exported image.
-              </p>
             </section>
             {doc && workspace.current && (
               <GuideControls
@@ -1439,46 +1382,9 @@ function App() {
                 change={layerChange}
               />
             )}
-            <div className="help">
-              <strong>A little room to work</strong>
-              <p>
-                Scroll to zoom.
-                <br />
-                Hold Space and drag to pan.
-                <br />
-                Fit brings your photo back into view.
-              </p>
-            </div>
           </aside>
         )}
         <div className="center">
-          <div className="canvas-bar">
-            {textEditing ? (
-              <>
-                <button
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => void workspace.current!.finishTextEditing()}
-                >
-                  Done editing text
-                </button>
-                <button
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() =>
-                    void workspace.current!.finishTextEditing(true)
-                  }
-                >
-                  Cancel text edit
-                </button>
-              </>
-            ) : (
-              <>
-                <span>{doc ? "Canvas" : "Your worktable"}</span>
-                <span className="badge">
-                  {doc ? "sRGB · transparent PNG" : "Local & offline"}
-                </span>
-              </>
-            )}
-          </div>
           <div
             ref={host}
             className={"stage " + (busy || preview ? "interaction-locked" : "")}
@@ -1495,30 +1401,60 @@ function App() {
             />
             <canvas ref={canvas} />
             <canvas ref={overlay} className="overlay" />
+            {textEditing && (
+              <div
+                className="canvas-bar"
+                role="toolbar"
+                aria-label="Text editing"
+              >
+                <button
+                  className="primary"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => void workspace.current!.finishTextEditing()}
+                >
+                  Done editing text
+                </button>
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() =>
+                    void workspace.current!.finishTextEditing(true)
+                  }
+                >
+                  Cancel text edit
+                </button>
+                <span>Ctrl+Enter to finish · Esc to cancel</span>
+              </div>
+            )}
             {!doc && (
               <div className="empty">
-                <div className="empty-icon">▧</div>
-                <h2>A fresh canvas for your photo.</h2>
+                <div className="empty-icon">
+                  <Icon name="image" size={40} />
+                </div>
+                <h2>Open a photo to start</h2>
                 <p>
-                  Open a PNG or JPEG, find its place,
-                  <br />
-                  and export a clean new copy.
+                  Drop a file anywhere, paste from the clipboard, or browse.
                 </p>
-                <button className="primary" disabled={busy} onClick={open}>
-                  Open a photo
-                </button>
-                <small>Your original stays untouched.</small>
-                <button
-                  disabled={busy}
-                  onClick={() => {
-                    void paste();
-                  }}
-                >
-                  Paste image
-                </button>
+                <div className="empty-actions">
+                  <button className="primary" disabled={busy} onClick={open}>
+                    <Icon name="open" />
+                    Open a photo
+                  </button>
+                  <button
+                    disabled={busy}
+                    onClick={() => {
+                      void paste();
+                    }}
+                  >
+                    <Icon name="paste" />
+                    Paste image
+                  </button>
+                </div>
+                <small>
+                  Stillwell edits a copy. Your original file is never changed.
+                </small>
                 {recent.length > 0 && (
                   <div className="home-recents">
-                    <h3>Continue editing</h3>
+                    <h3>Recent projects</h3>
                     {recent.slice(0, 3).map((r) => (
                       <button
                         key={r.id}
@@ -1535,7 +1471,7 @@ function App() {
                           });
                         }}
                       >
-                        {r.name}
+                        <span>{r.name}</span>
                         <small>
                           {r.width} × {r.height}
                         </small>
@@ -1547,10 +1483,13 @@ function App() {
             )}
           </div>
           <div className="canvas-footer">
-            <span>
+            <span className="doc-size">
               {shown ? `${shown.width} × ${shown.height} px` : "No image open"}
             </span>
-            <div>
+            <span className="canvas-hint">
+              Scroll to zoom · Space-drag to pan
+            </span>
+            <div className="zoom-group">
               <button disabled={!doc} onClick={() => workspace.current!.fit()}>
                 Fit
               </button>
@@ -1574,7 +1513,7 @@ function App() {
                     workspace.current!.setZoom(value / 100);
                 }}
               />
-              <span>%</span>
+              <span aria-hidden="true">%</span>
             </div>
           </div>
         </div>
@@ -1643,32 +1582,29 @@ function App() {
                   />
                 </label>
               )}
-              <h3>
+              <p className="hint">
                 {format === "jpeg"
-                  ? "A solid background for JPEG."
-                  : "Keep the clear parts clear."}
-              </h3>
-              <p>
-                {format === "jpeg"
-                  ? "Transparent pixels are flattened onto your selected matte colour."
-                  : "Transparency stays in your export. The checkerboard is only a preview."}
+                  ? "JPEG has no transparency: clear pixels are filled with the matte colour."
+                  : "Transparent pixels stay transparent. The checkerboard is only a preview."}
               </p>
-              <button
-                disabled={blocked}
-                onClick={() => {
-                  void paste();
-                }}
-              >
-                Paste image
-              </button>
-              <button
-                disabled={busy}
-                onClick={() => {
-                  void run(() => window.photo.revealLibrary());
-                }}
-              >
-                Reveal library
-              </button>
+              <div className="button-grid">
+                <button
+                  disabled={blocked}
+                  onClick={() => {
+                    void paste();
+                  }}
+                >
+                  Paste image
+                </button>
+                <button
+                  disabled={busy}
+                  onClick={() => {
+                    void run(() => window.photo.revealLibrary());
+                  }}
+                >
+                  Reveal library
+                </button>
+              </div>
             </div>
           </aside>
         )}
@@ -1697,13 +1633,14 @@ function App() {
             <div className="panel-title">
               <h2>{showRecent ? "Saved projects" : "Versions"}</h2>
               <button
+                className="icon-button quiet"
                 aria-label="Close dialog"
                 onClick={() => {
                   setShowRecent(false);
                   setShowVersions(false);
                 }}
               >
-                ×
+                <Icon name="close" size={16} />
               </button>
             </div>
             <div className="button-grid">
@@ -1862,7 +1799,7 @@ function App() {
       <footer role="status">
         <span className={busy ? "status-dot working" : "status-dot"} />
         {message}
-        <span className="footer-end">Offline workspace · Gate 7</span>
+        <span className="footer-end">Offline · stored on this computer</span>
       </footer>
     </main>
   );

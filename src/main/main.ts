@@ -218,8 +218,9 @@ app.whenReady().then(() => {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    backgroundColor: "#E7E7E7",
+    backgroundColor: "#1b1c1f",
     title: "Stillwell",
+    icon: join(__dirname, "icon.png"),
     webPreferences: {
       offscreen: hiddenTesting,
       backgroundThrottling: !hiddenTesting,
